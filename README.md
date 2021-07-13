@@ -11,3 +11,11 @@ Info about running the code:
 On terminal, run:
 bash
 $ node server.js
+
+### Video Demo
+
+My video demo is available at this link: https://youtu.be/kmEt5iH_T1o 
+
+### Try it out
+
+Deployed at this link: https://ancient-earth-77422.herokuapp.com
