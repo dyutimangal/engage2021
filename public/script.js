@@ -3,9 +3,10 @@ const videoGrid = document.getElementById("video-grid");
 const myVideo = document.createElement("video");
 const showChat = document.querySelector("#showChat");
 const backBtn = document.querySelector(".header__back");
-myVideo.muted = true;
+myVideo.muted = true; //so you dont hear self
 const peers = {}
 
+//Event Listener for button to close chat display on event 'click'
 backBtn.addEventListener("click", () => {
 	document.querySelector(".main__left").style.display = "flex";
 	document.querySelector(".main__left").style.flex = "1";
@@ -13,11 +14,13 @@ backBtn.addEventListener("click", () => {
 	document.querySelector(".header__back").style.display = "none";
 });
 
+//Event Listener for button to show chat display on event 'click'
 showChat.addEventListener("click", () => {
 	document.querySelector(".main__right").style.display = "flex";
 	document.querySelector(".header__back").style.display = "block";
 });
 
+//Prompt user entering room to enter name
 const user = prompt("Enter your name");
 
 var peer = new Peer(undefined, {
@@ -27,6 +30,15 @@ var peer = new Peer(undefined, {
 });
 
 
+peer.on("open", (id) => {
+	connected(user);
+	//Sends event 'join-room' to server
+	socket.emit("join-room", ROOM_ID, id, user);
+});
+
+
+
+//set up self video stream and add it to display
 let myVideoStream;
 navigator.mediaDevices.getUserMedia({
 	audio: true,
@@ -43,7 +55,8 @@ navigator.mediaDevices.getUserMedia({
 			addVideoStream(video, userVideoStream);
 		});
 	});
-
+	
+	//Function call when 'user-connected' event received from server
 	socket.on("user-connected", (userId, userName) => {
 		connectToNewUser(userId, stream);
 		if(userName!=user) connected(userName);
@@ -51,13 +64,6 @@ navigator.mediaDevices.getUserMedia({
   });
 
 
-
-
-
-
-// socket.on("start-meet", (userId) => {
-// 	startMeeting(userId, stream);
-// });
 
 const connectToNewUser = (userId, stream) => {
 	const call = peer.call(userId, stream);
@@ -72,10 +78,6 @@ const connectToNewUser = (userId, stream) => {
 };
 
 
-peer.on("open", (id) => {
-	connected(user);
-	socket.emit("join-room", ROOM_ID, id, user);
-});
 
 const addVideoStream = (video, stream) => {
 	video.srcObject = stream;
@@ -86,10 +88,13 @@ const addVideoStream = (video, stream) => {
 };
 
 
+
+//chat functionality starts from here
 let text = document.querySelector("#chat_message");
 let send = document.getElementById("send");
 let messages = document.querySelector(".messages");
 
+//Event Listener when user clicks '+' button to send chat 
 send.addEventListener("click", (e) => {
 	if (text.value.length !== 0) {
 		socket.emit("message", text.value);
@@ -97,6 +102,7 @@ send.addEventListener("click", (e) => {
 	}
 });
 
+//Event Listener when user preses enter button to send chat 
 text.addEventListener("keydown", (e) => {
 	if (e.key === "Enter" && text.value.length !== 0) {
 		socket.emit("message", text.value);
@@ -107,6 +113,8 @@ text.addEventListener("keydown", (e) => {
 const inviteButton = document.querySelector("#inviteButton");
 const muteButton = document.querySelector("#muteButton");
 const stopVideo = document.querySelector("#stopVideo");
+
+//Event Listener when user clicks mute button
 muteButton.addEventListener("click", () => {
 	const enabled = myVideoStream.getAudioTracks()[0].enabled;
 	if (enabled) {
@@ -122,6 +130,7 @@ muteButton.addEventListener("click", () => {
 	}
 });
 
+//Event Listener when user clicks "turn video off" button
 stopVideo.addEventListener("click", () => {
 	const enabled = myVideoStream.getVideoTracks()[0].enabled;
 	if (enabled) {
@@ -137,6 +146,7 @@ stopVideo.addEventListener("click", () => {
 	}
 });
 
+//Event Listener when user clicks invite button
 inviteButton.addEventListener("click", (e) => {
 	prompt(
 		"Send this link to people to let them join this room.",
@@ -144,6 +154,8 @@ inviteButton.addEventListener("click", (e) => {
 	);
 });
 
+
+//Display msg content on chat panel when 'createMessage' event received
 socket.on("createMessage", (message, userName) => {
 	messages.innerHTML = messages.innerHTML +
     `<div class="message">
@@ -155,12 +167,13 @@ socket.on("createMessage", (message, userName) => {
 });
 
 
+//Function call when user disconnects
 socket.on('user-disconnected', (userId, userName) => {
 	disconnected(userName);
 	if (peers[userId]) peers[userId].close();
 })
 
-
+//Function for chat panel to display "<user> joined"
 function connected(userName){
 	messages.innerHTML = messages.innerHTML +
     `<div class="message">
@@ -171,6 +184,7 @@ function connected(userName){
     </div>`;
 }
 
+//Function for chat panel to display "<user> left"
 function disconnected(userName){
 	messages.innerHTML = messages.innerHTML +
     `<div class="message">
