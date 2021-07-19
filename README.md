@@ -9,9 +9,9 @@ Client side code is stored in "public/script.js" and Server side code is stored 
 Info about running the code:
 
 On terminal, run:
-bash
+```bash
 $ node server.js
-
+```
 ### Video Demo
 
 My video demo is available here: https://youtu.be/kmEt5iH_T1o 
